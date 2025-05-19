@@ -1,0 +1,140 @@
+@startuml
+left to right direction
+skinparam linetype ortho
+skinparam nodesep 60
+skinparam ranksep 60
+skinparam entitySpacing 30
+
+package "Clientes" {
+    entity "Customers" as customers {
+        *customer_unique_id : UUID {PK}
+        customer_id : UUID
+        customer_zip_code_prefix : String
+        customer_city : String
+        customer_state : String
+    }
+    note right of customers
+    Ficheiro: olist_customers_dataset.csv
+    end note
+}
+
+package "Vendas" {
+    entity "Orders" as orders {
+        *order_id : UUID {PK}
+        customer_id : UUID {FK}
+        order_status : String
+        order_purchase_timestamp : DateTime
+        order_approved_at : DateTime
+        order_delivered_carrier_date : DateTime
+        order_delivered_customer_date : DateTime
+        order_estimated_delivery_date : DateTime
+    }
+    note right of orders
+    Ficheiro: olist_orders_dataset.csv
+    end note
+
+    entity "Order Items" as order_items {
+        *order_id : UUID {FK, PK}
+        *order_item_id : Int {PK}
+        product_id : UUID {FK}
+        seller_id : UUID {FK}
+        shipping_limit_date : DateTime
+        price : Float
+        freight_value : Float
+    }
+    note right of order_items
+    Ficheiro: olist_order_items_dataset.csv
+    end note
+}
+
+package "Pagamentos" {
+    entity "Payments" as payments {
+        *order_id : UUID {FK, PK}
+        *payment_sequential : Int {PK}
+        payment_type : String
+        payment_installments : Int
+        payment_value : Float
+    }
+    note right of payments
+    Ficheiro: olist_order_payments_dataset.csv
+    end note
+}
+
+package "Produtos" {
+    entity "Products" as products {
+        *product_id : UUID {PK}
+        product_category_name : String {FK}
+        product_name_length : Int
+        product_description_length : Int
+        product_photos_qty : Int
+        product_weight_g : Int
+        product_length_cm : Int
+        product_height_cm : Int
+        product_width_cm : Int
+    }
+    note right of products
+    Ficheiro: olist_products_dataset.csv
+    end note
+
+    entity "Category Translation" as cat_translation {
+        *product_category_name : String {PK}
+        product_category_name_english : String
+    }
+    note right of cat_translation
+    Ficheiro: product_category_name_translation.csv
+    end note
+}
+
+package "Vendedores" {
+    entity "Sellers" as sellers {
+        *seller_id : UUID {PK}
+        seller_zip_code_prefix : String
+        seller_city : String
+        seller_state : String
+    }
+    note right of sellers
+    Ficheiro: olist_sellers_dataset.csv
+    end note
+}
+
+package "Feedback" {
+    entity "Reviews" as reviews {
+        *review_id : UUID {PK}
+        order_id : UUID {FK}
+        review_score : Int
+        review_comment_title : String
+        review_comment_message : String
+        review_creation_date : DateTime
+        review_answer_timestamp : DateTime
+    }
+    note right of reviews
+    Ficheiro: olist_order_reviews_dataset.csv
+    end note
+}
+
+package "Localização" {
+    entity "Geolocation" as geolocation {
+        *geolocation_zip_code_prefix : String {PK}
+        geolocation_lat : Float
+        geolocation_lng : Float
+        geolocation_city : String
+        geolocation_state : String
+    }
+    note right of geolocation
+    Ficheiro: olist_geolocation_dataset.csv
+    end note
+}
+
+' Relações entre Entidades (com cardinalidade clara)
+customers "1" -- "0..*" orders : "places"
+orders "1" -- "1..*" order_items : "contains"
+order_items "1" -- "1" products : "includes"
+order_items "1" -- "1" sellers : "sold by"
+orders "1" -- "1..*" payments : "has"
+orders "0..1" -- "0..*" reviews : "reviewed by"
+products "1" -- "1" cat_translation : "translated to"
+
+' Relações de Localização
+geolocation "1" -- "0..*" customers : "via zip_code_prefix"
+geolocation "1" -- "0..*" sellers: "via zip_code_prefix"
+@enduml
